@@ -1,0 +1,353 @@
+CI - It is a process where we integrate a set of processes and a set of tools that we follow before delivering the appliation to the customer.
+CD - It is a process where we diliver or deploy our application in a specific platform to our customer.
+Below are the steps for cicd helps us - 
+1)Unit testing - tesing the code with resepect to the perticular block or functionality.
+2)Static code analysis - It needs to well formated code, memory usage.
+3)Code quality/vulneralibility - upgrade package and check for the security vulnerability before deliver to the customer.
+4)Automation 
+5)Reports
+5)Deployment
+
+Whenever a developer made a pull reauest or made a change into the git repository then jenkins will see there is a commit and then perform all the above mentioned
+steps as we defined.It will act as a orchestrator. it will automate the tools inside it.
+for ex - It is a java based applicaton, then we can integrate maven to the jenkins for building the code, then unit test using junit etc. then we can integrate 
+sonarqube for code analysis into the jenkins then for reports also we can integrate tool.
+So whenever there will be a commit in code then these steps has to be performed in jenkins pipeline.
+So what it does---------It will integrate all of these tools or steps in jenkins pipeline.
+
+Setup jenkins - 
+Jenkins master where will install and setup jenkins - from here will only schedule jobs.
+In this case we have master and slave or worker node which is helpful for load distribution and version specific applications.
+There is a best way for exuting this master slave configuration we can use docker instead of virtual machines.which will be very cost effective and also will run
+our pipeline inside docker containers from the jenkins master node.
+Install the Docker Pipeline plugin in Jenkins:
+Log in to Jenkins.
+Go to Manage Jenkins > Manage Plugins.
+In the Available tab, search for "Docker Pipeline".
+Select the plugin and click the Install button.
+Restart Jenkins after the plugin is installed.
+
+Wait for the Jenkins to be restarted.
+
+Docker Slave Configuration
+Run the below command to Install Docker
+
+sudo apt update
+sudo apt install docker.io
+Grant Jenkins user and Ubuntu user permission to docker deamon.
+sudo su - 
+usermod -aG docker jenkins
+usermod -aG docker ubuntu
+systemctl restart docker
+The docker agent configuration is now successful.
+
+now our pipeline is running on docker containers instead of virtual machines.
+
+
+by using docker based approch instead of vm based approch we are saving a lot of time and cost.
+like for this project, we are technically mantaining two vms - one for nodejs and other one for maven. and whenever we have to increaste or upgrade the version of
+maven by going to the vm.so means there are a lot of activity need to maintain from a devops engineer and using this approch we are avoiding this activity.
+
+
+
+Shared Libraries -----------------------
+In Jenkins, a shared library is a way to store commonly used code(reusable code), such as scripts or functions, that can be used by different Jenkins pipelines.
+
+Instead of writing the same code again and again in multiple pipelines, you can create a shared library and use it in all the pipelines that need it. This can make your code more organized and easier to maintain.
+
+Think of it like a library of books, Instead of buying the same book over and over again, you can borrow it from the library whenever you need it.
+
+Advantages
+Standarization of Pipelines
+Reduce duplication of code
+Easy onboarding of new applications, projects or teams
+One place to fix issues with the shared or common code
+Code Maintainence
+Reduce the risk of errors
+----------------------------------------------
+
+
+
+
+
+
+
+
+jenkins end to end project --------------------------------------------
+
+We have agit repostory, we have our application source code.let's say we have a java application. Now as soon as a developer raises a pull request to the git 
+repository, we have cofigured webhooks. using the webhooks we triggers the jenkins pipeline.
+We have used declrative jenkins pipeline because declarative pipeline are easy to write and collobrate. now as part of this jenkins pipeline we ran multiple 
+stages which are - 
+1)build stage - using maven which is our build tool we have builded the application, where we also execute some unit test and if the build is successful then next
+2)stage2 - static code analysis, then, in the stage3 will verify some security vulnaribulity during the new code change.
+and if any one of them is failed then we would send the email/slack notification that we have configured.
+let's say all of these steps are successful then we would go forward and create a docker image using docker file which we have stored in git repository.and as
+soon as the docker image is created will push it to the image registery. --------------CI process end.
+CD process ------------
+once the image is pushed in registry, we have a kubernetes cluster, inside the cluster we have deployed 2 cd tools one is image updater and other one is argocd.
+both of these are kubernetes controller that we have depoyed in our cluster.
+argo image updater continously monitor the image registery and as soon the new image created it will pick the new image and update the new image in another git 
+repo that we have. and this git repo is purly for the image manifest.that is our helmcharts deployment.yml pod.yml.
+as soon as the git repo is updated with new image that the argocd takes the new image and deplyed in a kubenetes cluster.
+
+This is how we have set CICD in our org.
+
+
+Interview quesitons ----------------------------------------------
+
+1) Explain the CICD Pipeline which you have implemented in your organization.
+
+We use our source code platform as git repostitory and target is kubernetes. User makes a code commit in a git repository and then we use a ci orchestrator(Jenkins). The reason for use orchestrator is , whenever the code
+commit happens in git repository, the github webhook triggers the pipeline in your orchestrator. Now jenkins does the CI part.
+As of part of continous integration there are multiple stage - as part of the first stage we will chekout the code commit that user have made.
+then in second stage, will try to perform a build action along with the unit test cases. We used maven for building and use unit test cases in the code repository if it is a java application.
+then in third stage, will perform code scan or static code analysis and will perform some security checks for checking any security vulnurability which is sonarqube or any other platform.
+then in fourth stage, will build a container image, because the target platform is kubrnetes. for that will use a dockerfile in git repo.and will scan the image for checking any vulnarability. then will push our image to
+the image registory.
+
+Checkout - Build & UT - Code Scan - Image Build - Image Scan - Image Push 
+
+Above are multiple stages for continous integration. and we write Jenkinsfile in our repo for orchestrating these all stages. We use the declarative pipeline which are very easy to collobrate in terms of scripted pipeline.
+ Now the next steps would be get this image into our kubernetes cluster from docker hub.
+Some people use the same git repository for updat this image in the kubernetes menifest. and then again we have to push this updated image to a github repository which is hosting all of this kubernetes menifest.
+Then using Argocd will deploy the new change in kubernetes cluster.
+how it happens - Argocd continously watches git repostiory. where we are updating the kubernetes menifest we have to configure Argocd for dpeloying the new image in the kubernetes cluster.
+
+
+
+
+
+
+------------------------------------------------------------------------------------------
+
+
+
+
+NOTE: While I have prepared all the questions, to provide better answers in a detailed way, the summary provided below is the collection of my knowledge and information from various sources like Medium, Stack Overflow, ChatGPT.
+Q: Can you explain the CICD process in your current project ? or Can you talk about any CICD process that you have implemented ?
+
+A: In the current project we use the following tools orchestrated with Jenkins to achieve CICD.
+
+Maven, Sonar, AppScan, ArgoCD, and Kubernetes
+Coming to the implementation, the entire process takes place in 8 steps
+
+1. Code Commit: Developers commit code changes to a Git repository hosted on GitHub.
+2. Jenkins Build: Jenkins is triggered to build the code using Maven. Maven builds the code and runs unit tests.
+3. Code Analysis: Sonar is used to perform static code analysis to identify any code quality issues, security vulnerabilities, and bugs.
+4. Security Scan: AppScan is used to perform a security scan on the application to identify any security vulnerabilities.
+5. Deploy to Dev Environment: If the build and scans pass, Jenkins deploys the code to a development environment managed by Kubernetes.
+6. Continuous Deployment: ArgoCD is used to manage continuous deployment. ArgoCD watches the Git repository and automatically deploys new changes to the development environment as soon as they are committed.
+7. Promote to Production: When the code is ready for production, it is manually promoted using ArgoCD to the production environment.
+8. Monitoring: The application is monitored for performance and availability using Kubernetes tools and other monitoring tools.
+Q: What are the different ways to trigger jenkins pipelines ?
+
+A: This can be done in multiple ways, To briefly explain about the different options,
+
+  - Poll SCM: Jenkins can periodically check the repository for changes and automatically build if changes are detected. 
+              This can be configured in the "Build Triggers" section of a job.
+              
+  - Build Triggers: Jenkins can be configured to use the Git plugin, which allows you to specify a Git repository and branch to build. 
+              The plugin can be configured to automatically build when changes are pushed to the repository.
+              
+  - Webhooks: A webhook can be created in GitHub to notify Jenkins when changes are pushed to the repository. 
+              Jenkins can then automatically build the updated code. This can be set up in the "Build Triggers" section of a job and in the GitHub repository settings.
+Q: How to backup Jenkins ?
+
+A: Backing up Jenkins is a very easy process, there are multiple default and configured files and folders in Jenkins that you might want to backup.
+
+  - Configuration: The `~/.jenkins` folder. You can use a tool like rsync to backup the entire directory to another location.
+  
+    - Plugins: Backup the plugins installed in Jenkins by copying the plugins directory located in JENKINS_HOME/plugins to another location.
+    
+    - Jobs: Backup the Jenkins jobs by copying the jobs directory located in JENKINS_HOME/jobs to another location.
+    
+    - User Content: If you have added any custom content, such as build artifacts, scripts, or job configurations, to the Jenkins environment, make sure to backup those as well.
+    
+    - Database Backup: If you are using a database to store information such as build results, you will need to backup the database separately. This typically involves using a database backup tool, such as mysqldump for MySQL, to export the data to another location.
+One can schedule the backups to occur regularly, such as daily or weekly, to ensure that you always have a recent copy of your Jenkins environment available. You can use tools such as cron or Windows Task Scheduler to automate the backup process.
+
+Q: How do you store/secure/handle secrets in Jenkins ?
+
+A: Again, there are multiple ways to achieve this, Let me give you a brief explanation of all the posible options.
+
+   - Credentials Plugin: Jenkins provides a credentials plugin that can be used to store secrets such as passwords, API keys, and certificates. The secrets are encrypted and stored securely within Jenkins, and can be easily retrieved in build scripts or used in other plugins.
+   
+   - Environment Variables: Secrets can be stored as environment variables in Jenkins and referenced in build scripts. However, this method is less secure because environment variables are visible in the build logs.
+   
+   - Hashicorp Vault: Jenkins can be integrated with Hashicorp Vault, which is a secure secrets management tool. Vault can be used to store and manage sensitive information, and Jenkins can retrieve the secrets as needed for builds.
+   
+   - Third-party Secret Management Tools: Jenkins can also be integrated with third-party secret management tools such as AWS Secrets Manager, Google Cloud Key Management Service, and Azure Key Vault.
+Q: What is latest version of Jenkins or which version of Jenkins are you using ?
+
+A: This is a very simple question interviewers ask to understand if you are actually using Jenkins day-to-day, so always be prepared for this.
+
+Q: What is shared modules in Jenkins ?
+
+A: Shared modules in Jenkins refer to a collection of reusable code and resources that can be shared across multiple Jenkins jobs. This allows for easier maintenance, reduced duplication, and improved consistency across multiple build processes. For example, shared modules can be used in cases like:
+
+        - Libraries: Custom Java libraries, shell scripts, and other resources that can be reused across multiple jobs.
+        
+        - Jenkinsfile: A shared Jenkinsfile can be used to define the build process for multiple jobs, reducing duplication and making it easier to manage the build process for multiple projects.
+        
+        - Plugins: Common plugins can be installed once as a shared module and reused across multiple jobs, reducing the overhead of managing plugins on individual jobs.
+        
+        - Global Variables: Shared global variables can be defined and used across multiple jobs, making it easier to manage common build parameters such as version numbers, artifact repositories, and environment variables.
+Q: can you use Jenkins to build applications with multiple programming languages using different agents in different stages ?
+
+A: Yes, Jenkins can be used to build applications with multiple programming languages by using different build agents in different stages of the build process.
+
+Jenkins supports multiple build agents, which can be used to run build jobs on different platforms and with different configurations. By using different agents in different stages of the build process, you can build applications with multiple programming languages and ensure that the appropriate tools and libraries are available for each language.
+
+For example, you can use one agent for compiling Java code and another agent for building a Node.js application. The agents can be configured to use different operating systems, different versions of programming languages, and different libraries and tools.
+
+Jenkins also provides a wide range of plugins that can be used to support multiple programming languages and build tools, making it easy to integrate different parts of the build process and manage the dependencies required for each stage.
+
+Overall, Jenkins is a flexible and powerful tool that can be used to build applications with multiple programming languages and support different stages of the build process.
+
+Q: How to setup auto-scaling group for Jenkins in AWS ?
+
+A: Here is a high-level overview of how to set up an autoscaling group for Jenkins in Amazon Web Services (AWS):
+
+    - Launch EC2 instances: Create an Amazon Elastic Compute Cloud (EC2) instance with the desired configuration and install Jenkins on it. This instance will be used as the base image for the autoscaling group.
+    
+    - Create Launch Configuration: Create a launch configuration in AWS Auto Scaling that specifies the EC2 instance type, the base image (created in step 1), and any additional configuration settings such as storage, security groups, and key pairs.
+    
+    - Create Autoscaling Group: Create an autoscaling group in AWS Auto Scaling and specify the launch configuration created in step 2. Also, specify the desired number of instances, the minimum number of instances, and the maximum number of instances for the autoscaling group.
+    
+    - Configure Scaling Policy: Configure a scaling policy for the autoscaling group to determine when new instances should be added or removed from the group. This can be based on the average CPU utilization of the instances or other performance metrics.
+    
+    - Load Balancer: Create a load balancer in Amazon Elastic Load Balancer (ELB) and configure it to forward traffic to the autoscaling group.
+    
+    - Connect to Jenkins: Connect to the Jenkins instance using the load balancer endpoint or the public IP address of one of the instances in the autoscaling group.
+    
+    - Monitoring: Monitor the instances in the autoscaling group using Amazon CloudWatch to ensure that they are healthy and that the autoscaling policy is functioning as expected.
+
+ By using an autoscaling group for Jenkins, you can ensure that you have the appropriate number of instances available to handle the load on your build processes, and that new instances can be added or removed automatically as needed. This helps to ensure the reliability and scalability of your Jenkins environment.
+Q: How to add a new worker node in Jenkins ?
+
+A: Log into the Jenkins master and navigate to Manage Jenkins > Manage Nodes > New Node. Enter a name for the new node and select Permanent Agent. Configure SSH and click on Launch.
+
+Q: How to add a new plugin in Jenkins ?
+
+A: Using the CLI, java -jar jenkins-cli.jar install-plugin <PLUGIN_NAME>
+
+Using the UI,
+
+Click on the "Manage Jenkins" link in the left-side menu.
+Click on the "Manage Plugins" link.
+Q: What is JNLP and why is it used in Jenkins ?
+
+A: In Jenkins, JNLP is used to allow agents (also known as "slave nodes") to be launched and managed remotely by the Jenkins master instance. This allows Jenkins to distribute build tasks to multiple agents, providing scalability and improving performance.
+
+When a Jenkins agent is launched using JNLP, it connects to the Jenkins master and receives build tasks, which it then executes. The results of the build are then sent back to the master and displayed in the Jenkins user interface.
+
+Q: What are some of the common plugins that you use in Jenkins ?
+
+A: Be prepared for answer, you need to have atleast 3-4 on top of your head, so that interview feels you use jenkins on a day-to-day basis.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
