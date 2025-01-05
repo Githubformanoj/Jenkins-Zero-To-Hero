@@ -1,14 +1,23 @@
 name: action for Springboot
 
+
 on:
   push:
-    branches:
-      - main
+    paths:
+      - 'java-maven-sonar-argocd-helm-k8s/**'   
+  pull_request:
+    paths:
+      - 'java-maven-sonar-argocd-helm-k8s/**' 
 jobs:
-  checkout:
+  build:
     runs-on: ubuntu-latest
     steps:
     - name: checkout code
       uses: action/checkout@v2
+
+    - name: set working directory
+      run: cd java-maven-sonar-argocd-helm-k8s
+
+    
     
       
