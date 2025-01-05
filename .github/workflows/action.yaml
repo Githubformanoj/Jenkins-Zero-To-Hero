@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: checkout code
-      uses: action/checkout@v2
+      uses: action/checkout@v3
 
     - name: set working directory
       run: cd java-maven-sonar-argocd-helm-k8s
